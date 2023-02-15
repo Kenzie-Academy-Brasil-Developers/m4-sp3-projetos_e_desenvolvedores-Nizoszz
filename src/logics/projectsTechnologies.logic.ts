@@ -83,7 +83,6 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
 const del = async (request: Request, response: Response): Promise<Response> => {
   const projectId: number = Number(request.params.id);
   const technologyName: string = request.params.name;
-  console.log(technologyName);
 
   const queryTechnologyTemplate = `
     SELECT
