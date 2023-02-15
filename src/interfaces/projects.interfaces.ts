@@ -18,7 +18,6 @@ type RequiredKeysProject =
   | "estimatedTime"
   | "repository"
   | "startDate"
-  | "endDate"
   | "developerID";
 type ProjectResult = QueryResult<iProject>;
 type ProjectCreate = Omit<iProject, "id">;
