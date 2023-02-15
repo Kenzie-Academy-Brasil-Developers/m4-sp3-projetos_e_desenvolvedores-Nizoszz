@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS "projects"(
     "startDate" DATE NOT NULL,
     "endDate" DATE,
     "developerID" INTEGER NOT NULL,
-    FOREIGN KEY ("developerID") REFERENCES developers("id")
+    FOREIGN KEY ("developerID") REFERENCES developers("id") ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS "technologies"(

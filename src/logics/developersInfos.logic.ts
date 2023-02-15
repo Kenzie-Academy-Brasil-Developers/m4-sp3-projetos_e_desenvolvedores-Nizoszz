@@ -36,7 +36,8 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
       return resp.status(409).json({ message: "Infos already exists." });
     }
 
-    const body: DeveloperInfosCreate = req.body;
+    const { developerSince, preferredOS }: DeveloperInfosCreate = req.body;
+    const body = { developerSince, preferredOS };
 
     const tbCol: string[] = Object.keys(body);
     const tbValues: (string | Date)[] = Object.values(body);
@@ -73,7 +74,7 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
 
     const queryResult: DeveloperInfoResult = await client.query(queryConfig);
 
-    return resp.status(201).json(queryResult.rows[0]);
+    return resp.status(201).json(developerInfos);
   } catch (error: any) {
     if (error.message) {
       return resp.status(409).json({ message: "Insert correct values." });
@@ -109,28 +110,45 @@ const read = async (req: Request, resp: Response): Promise<Response> => {
 
 const update = async (req: Request, resp: Response): Promise<Response> => {
   try {
+    const userId: number = Number(req.params.id);
+
+    const queryUserTemplate: string = `
+      SELECT 
+        *
+      FROM 
+        developers d
+      LEFT JOIN
+        developer_infos di ON d."developerInfoID" = di.id
+      WHERE
+        d.id = $1
+    `;
+
+    const queryUserString: QueryConfig = {
+      text: queryUserTemplate,
+      values: [userId],
+    };
+
+    const queryUserResult: QueryResult = await client.query(queryUserString);
+
+    const developer = queryUserResult.rows[0];
+
     const body: string[] = req.body;
     const tbCol: string[] = Object.keys(body);
-    const tbValues: string[] = Object.values(body);
-    const params = req.params.id;
+    const tbValues: (string | Date)[] = Object.values(body);
 
     const queryTemplate = `
-    UPDATE 
-      "developer_infos" di  
-    SET
-      (%I) = ROW (%L)
-    FROM
-      "developers" d 
-    WHERE 
-      di.id = d."developerInfoID"
-    AND
-      d.id = $1
-    RETURNING *;    
+      UPDATE 
+        "developer_infos" 
+      SET
+        (%I) = ROW (%L)
+      WHERE 
+        id = $1
+      RETURNING *;  
     `;
     const queryFormat: string = format(queryTemplate, tbCol, tbValues);
     const queryConfig: QueryConfig = {
       text: queryFormat,
-      values: [params],
+      values: [developer.developerInfoID],
     };
 
     const queryResult: DeveloperInfoResult = await client.query(queryConfig);

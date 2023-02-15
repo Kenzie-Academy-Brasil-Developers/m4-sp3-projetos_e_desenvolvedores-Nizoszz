@@ -6,28 +6,27 @@ const verify = async (
   resp: Response,
   next: NextFunction
 ): Promise<Response | void> => {
-  const body = req.body;
-  const bodyKeys: string[] = Object.keys(body);
-  const requiredKeys: RequiredKeysProject[] = [
+  const bodyKeys: string[] = Object.keys(req.body);
+  const bodyValues: string[] = Object.values(req.body);
+  let requiredKeys: RequiredKeysProject[] = [
     "name",
     "description",
     "estimatedTime",
     "repository",
     "startDate",
-    "endDate",
     "developerID",
   ];
 
-  const verifyKeys = bodyKeys.every((key: string) =>
-    requiredKeys.join().includes(key)
+  let verifyKeys = requiredKeys.every((key: string) =>
+    bodyKeys.join().includes(key)
   );
 
   if (req.method === "PATCH") {
-    const verifyKeysUpdate = bodyKeys.every((key: string) =>
-      requiredKeys.join().includes(key)
+    verifyKeys = requiredKeys.some((key: string) =>
+      bodyKeys.join().includes(key)
     );
 
-    if (!verifyKeysUpdate) {
+    if (!verifyKeys && !"endDate") {
       const joinedKeys: string[] = requiredKeys;
       return resp.status(400).json({
         message: "At least one of those keys must be send.",
@@ -36,14 +35,14 @@ const verify = async (
     }
   }
 
-  if (!verifyKeys) {
+  if (!verifyKeys && !"endDate") {
     const joinedKeys: string = requiredKeys.join(", ");
     return resp
       .status(400)
       .json({ message: `Missing required keys: ${joinedKeys}.` });
   }
 
-  if (typeof req.body.name !== "string") {
+  if (typeof bodyValues.join() !== "string") {
     return resp.status(400).json({ message: "The name need to be a string" });
   }
 
