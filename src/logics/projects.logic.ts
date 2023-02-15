@@ -154,7 +154,6 @@ const readProject = async (req: Request, resp: Response): Promise<Response> => {
   const queryResult: ProjectResult = await client.query(queryFormat);
 
   const projects = queryResult.rows;
-  console.log(projects);
   return resp.status(200).json(projects);
 };
 

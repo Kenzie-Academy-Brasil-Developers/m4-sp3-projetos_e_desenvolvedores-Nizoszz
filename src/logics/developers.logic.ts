@@ -12,7 +12,6 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
     const { name, email } = req.body;
 
     const body: DeveloperCreate = { name, email };
-    console.log(body);
     const tbCol: string[] = Object.keys(body);
     const tbValues: string[] = Object.values(body);
 
