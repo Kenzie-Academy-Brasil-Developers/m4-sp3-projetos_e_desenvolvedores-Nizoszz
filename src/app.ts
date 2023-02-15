@@ -35,11 +35,6 @@ app.get(
   developersLogic.readId
 );
 
-app.get(
-  "/developers/:id/infos",
-  ensureExistsDeveloper.verify,
-  developersInfosLogic.read
-);
 app.patch(
   "/developers/:id",
   ensureExistsDeveloper.verify,

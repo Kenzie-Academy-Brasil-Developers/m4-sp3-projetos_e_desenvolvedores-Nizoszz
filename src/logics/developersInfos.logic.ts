@@ -83,31 +83,6 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
   }
 };
 
-const read = async (req: Request, resp: Response): Promise<Response> => {
-  const userId: number = Number(req.params.id);
-  const queryTemplate: string = `
-    SELECT 
-      d.*,
-      di."developerSince",
-      di."preferredOS"
-    FROM 
-      developers d
-    LEFT JOIN
-      developer_infos di ON d."developerInfoID" = di.id
-    WHERE
-      d.id = $1
-  `;
-  const queryString: QueryConfig = {
-    text: queryTemplate,
-    values: [userId],
-  };
-  const queryResult: DeveloperInfoResult = await client.query(queryString);
-
-  const developers = queryResult.rows[0];
-
-  return resp.status(200).json(developers);
-};
-
 const update = async (req: Request, resp: Response): Promise<Response> => {
   try {
     const userId: number = Number(req.params.id);
@@ -160,4 +135,4 @@ const update = async (req: Request, resp: Response): Promise<Response> => {
   }
 };
 
-export default { create, read, update };
+export default { create, update };
