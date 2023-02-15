@@ -110,7 +110,7 @@ const readId = async (req: Request, resp: Response): Promise<Response> => {
   const queryFormat: string = format(queryTemplate, [projectId]);
   const queryResult: ProjectResult = await client.query(queryFormat);
 
-  const projects = queryResult.rows;
+  const projects = queryResult.rows[0];
 
   return resp.status(200).json(projects);
 };
@@ -147,14 +147,14 @@ const readProject = async (req: Request, resp: Response): Promise<Response> => {
         WHERE
             d."id" = (%L)
         ORDER BY
-            d."id" ASC;
+            pt."projectID" ASC;
           `;
 
   const queryFormat: string = format(queryTemplate, [projectId]);
   const queryResult: ProjectResult = await client.query(queryFormat);
 
   const projects = queryResult.rows;
-
+  console.log(projects);
   return resp.status(200).json(projects);
 };
 

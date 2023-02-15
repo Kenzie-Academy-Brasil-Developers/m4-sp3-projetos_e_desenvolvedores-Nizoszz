@@ -9,8 +9,10 @@ import {
 
 const create = async (req: Request, resp: Response): Promise<Response> => {
   try {
-    const body: DeveloperCreate = req.body;
+    const { name, email } = req.body;
 
+    const body: DeveloperCreate = { name, email };
+    console.log(body);
     const tbCol: string[] = Object.keys(body);
     const tbValues: string[] = Object.values(body);
 
@@ -78,7 +80,7 @@ const readId = async (req: Request, resp: Response): Promise<Response> => {
   const queryFormat: string = format(queryTemplate, [paramId]);
   const queryResult: DeveloperResult = await client.query(queryFormat);
 
-  const developers = queryResult.rows;
+  const developers = queryResult.rows[0];
 
   return resp.status(200).json(developers);
 };

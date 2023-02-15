@@ -9,11 +9,14 @@ const verify = async (
   const bodyKeys: string[] = Object.keys(req.body);
   const requiredKeys: RequiredKeysDeveloper[] = ["name", "email"];
 
-  const verifyKeys = bodyKeys.every((key: string) =>
-    requiredKeys.join().includes(key)
+  let verifyKeys: boolean = requiredKeys.every((key: string) =>
+    bodyKeys.join().includes(key)
   );
-
   if (req.method === "PATCH") {
+    verifyKeys = requiredKeys.some((key: string) =>
+      bodyKeys.join().includes(key)
+    );
+
     if (!verifyKeys) {
       const joinedKeys: string[] = requiredKeys;
       return resp.status(400).json({
@@ -27,11 +30,18 @@ const verify = async (
     const joinedKeys: string = requiredKeys.join(", ");
     return resp
       .status(400)
-      .json({ message: `Required keys are: ${joinedKeys}.` });
+      .json({ message: `Missing required keys: ${joinedKeys}.` });
+  }
+  if (req.body.name) {
+    if (typeof req.body.name !== "string") {
+      return resp.status(400).json({ message: "The name need to be a string" });
+    }
   }
 
-  if (typeof req.body.name !== "string") {
-    return resp.status(400).json({ message: "The name need to be a string" });
+  if (req.body.email) {
+    if (typeof req.body.email !== "string") {
+      return resp.status(400).json({ message: "The name need to be a string" });
+    }
   }
 
   return next();
