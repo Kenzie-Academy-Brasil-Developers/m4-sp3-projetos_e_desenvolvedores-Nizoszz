@@ -1,6 +1,6 @@
 import {
-  ProjectCreate,
   ProjectResult,
+  RequiredKeysProject,
 } from "../interfaces/projects.interfaces";
 import { Request, Response } from "express";
 import { QueryConfig, QueryResult } from "pg";
@@ -9,7 +9,7 @@ import { client } from "../database";
 
 const create = async (req: Request, resp: Response): Promise<Response> => {
   try {
-    const userId: number = req.body.developerID;
+    const userId: number = req.body.developerId;
     const queryUserTemplate: string = `
         SELECT
             COUNT(*)
@@ -28,9 +28,29 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
       return resp.status(404).json({ message: "Developer not found!" });
     }
 
-    const body: ProjectCreate = req.body;
-    const tbCol: string[] = Object.keys(body);
-    const tbValues: (string | Date)[] = Object.values(body);
+    let requiredKeys: RequiredKeysProject[] = [
+      "name",
+      "description",
+      "estimatedTime",
+      "repository",
+      "startDate",
+      "developerId",
+    ];
+
+    let tbCol: string[] = Object.keys(req.body);
+
+    const filteredCol: string[] = tbCol.filter((key: any) =>
+      requiredKeys.includes(key)
+    );
+
+    const newBody: any = {};
+
+    filteredCol.map((key: string) => {
+      newBody[key] = req.body[key];
+    });
+
+    tbCol = Object.keys(newBody);
+    const tbValues: (string | number | Date)[] = Object.values(newBody);
 
     const queryTemplate: string = `
       INSERT INTO 
@@ -46,6 +66,9 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
 
     return resp.status(201).json(project);
   } catch (error: any) {
+    if (error.routine === "DateTimeParseError") {
+      return resp.status(409).json({ message: "Incorrect date value." });
+    }
     return resp.status(500).json({ message: "Internal server error." });
   }
 };
@@ -60,15 +83,15 @@ const read = async (req: Request, resp: Response): Promise<Response> => {
             p."repository",
             p."startDate",
             p."endDate",
-            p."developerID" "projectDeveloperID",
-            pt."technologyID",
+            p."developerId" "projectDeveloperId",
+            pt."technologyId",
             t."name" "technologyName"
         FROM 
             projects p
         LEFT JOIN 
-            projects_technologies pt ON p."id" = pt."projectID"
+            projects_technologies pt ON p."id" = pt."projectId"
         LEFT JOIN 
-            technologies t ON pt."technologyID" = t.id
+            technologies t ON pt."technologyId" = t.id
         ORDER BY
             p."id" ASC;
     `;
@@ -92,15 +115,15 @@ const readId = async (req: Request, resp: Response): Promise<Response> => {
             p."repository",
             p."startDate",
             p."endDate",
-            p."developerID" "projectDeveloperID",
-            pt."technologyID",
+            p."developerId" "projectDeveloperId",
+            pt."technologyId",
             t."name" "technologyName"
         FROM 
             projects p
         LEFT JOIN 
-            projects_technologies pt ON p."id" = pt."projectID"
+            projects_technologies pt ON p."id" = pt."projectId"
         LEFT JOIN 
-            technologies t ON pt."technologyID" = t.id
+            technologies t ON pt."technologyId" = t.id
         WHERE
           p."id" = (%L)
         ORDER BY
@@ -119,35 +142,35 @@ const readProject = async (req: Request, resp: Response): Promise<Response> => {
   const projectId: number = Number(req.params.id);
   const queryTemplate: string = `
         SELECT
-            d."id" "developerID",
+            d."id" "developerId",
             d."name" "developerName",
             d."email" "developerEmail",
-            d."developerInfoID" ,
+            d."developerInfoId" ,
             di."developerSince" "developerInfoSice",
             di."preferredOS" "developerInfoPreferredOS",
-            p."id" "projectID",
+            p."id" "projectId",
             p."name" "projectName",
             p."description" "projectDescription",
             p."estimatedTime" "projectEstimatedTime",
             p."repository" "projectRepository",
             p."startDate" "projectStartDate",
             p."endDate" "projectEndDate",
-            pt."technologyID",
+            pt."technologyId",
             t."name" "technologyName"
         FROM
             developers d
+        LEFT JOIN
+            developer_infos di ON d."developerInfoId" = di.id
         JOIN
-            developer_infos di ON d."developerInfoID" = di.id
-        JOIN
-            projects p ON d."id"  = p."developerID"
-        JOIN
-            projects_technologies pt ON p."id" = pt."projectID"
-        JOIN
-            technologies t ON pt."technologyID" = t."id"
+            projects p ON d."id"  = p."developerId"
+        LEFT JOIN
+            projects_technologies pt ON p."id" = pt."projectId"
+        LEFT JOIN
+            technologies t ON pt."technologyId" = t."id"
         WHERE
             d."id" = (%L)
         ORDER BY
-            pt."projectID" ASC;
+            pt."projectId" ASC;
           `;
 
   const queryFormat: string = format(queryTemplate, [projectId]);
@@ -159,11 +182,50 @@ const readProject = async (req: Request, resp: Response): Promise<Response> => {
 
 const update = async (req: Request, resp: Response): Promise<Response> => {
   try {
-    const body: string[] = req.body;
-    const tbCol: string[] = Object.keys(body);
-    const tbValues: string[] = Object.values(body);
-    const params = req.params.id;
+    const userId: number = req.body.developerId;
+    const queryUserTemplate: string = `
+        SELECT
+            COUNT(*)
+        FROM
+            "developers"
+        WHERE
+            id = $1
+    `;
+    const queryUserResult: QueryResult = await client.query(queryUserTemplate, [
+      userId,
+    ]);
 
+    const user = queryUserResult.rows[0].count;
+
+    if (Number(user) < 1) {
+      return resp.status(404).json({ message: "Developer not found!" });
+    }
+
+    let requiredKeys: string[] = [
+      "name",
+      "description",
+      "estimatedTime",
+      "repository",
+      "startDate",
+      "endDate",
+      "developerId",
+    ];
+
+    let tbCol: string[] = Object.keys(req.body);
+    const filteredCol: string[] = tbCol.filter((key: any) =>
+      requiredKeys.includes(key)
+    );
+
+    const newBody: any = {};
+
+    filteredCol.map((key: string) => {
+      newBody[key] = req.body[key];
+    });
+
+    tbCol = Object.keys(newBody);
+    const tbValues = Object.values(newBody);
+
+    const params = req.params.id;
     const queryTemplate = `
         UPDATE 
             "projects" p  
@@ -178,12 +240,14 @@ const update = async (req: Request, resp: Response): Promise<Response> => {
       text: queryFormat,
       values: [params],
     };
-
     const queryResult: ProjectResult = await client.query(queryConfig);
     const developerUpdate = queryResult.rows[0];
 
     return resp.status(200).json(developerUpdate);
   } catch (error: any) {
+    if (error.routine === "DateTimeParseError") {
+      return resp.status(409).json({ message: "Incorrect date value." });
+    }
     return resp.status(500).json({ message: "Interal server error." });
   }
 };

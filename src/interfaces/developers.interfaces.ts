@@ -9,9 +9,19 @@ interface iDeveloper extends iDeveloperRequest {
   id: number;
 }
 
+interface iDeveloperUpdate {
+  name?: string;
+  email?: string;
+}
+
 interface iDeveloperInfosRequest {
   developerSince: Date;
   preferredOS: string;
+}
+
+interface iDeveloperInfosUpdate {
+  developerSince?: Date;
+  preferredOS?: string;
 }
 
 interface iDeveloperInfos extends iDeveloperInfosRequest {
@@ -39,4 +49,6 @@ export {
   RequiredTypesPreferredOS,
   DeveloperCreate,
   DeveloperInfosCreate,
+  iDeveloperUpdate,
+  iDeveloperInfosUpdate,
 };

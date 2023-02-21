@@ -14,7 +14,7 @@ const verify = async (
     "estimatedTime",
     "repository",
     "startDate",
-    "developerID",
+    "developerId",
   ];
 
   let verifyKeys = requiredKeys.every((key: string) =>
@@ -33,6 +33,13 @@ const verify = async (
         keys: `${joinedKeys}.`,
       });
     }
+  }
+
+  if (!verifyKeys) {
+    const joinedKeys: string = requiredKeys.join(", ");
+    return resp
+      .status(400)
+      .json({ message: `Missing required keys: ${joinedKeys}.` });
   }
 
   if (!verifyKeys && !"endDate") {

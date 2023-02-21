@@ -7,8 +7,8 @@ interface iProjectsTechonologiesRequest {
 interface iProjectsTechonologies {
   id: number;
   addedIn: Date;
-  projectID: number;
-  technologyID: number;
+  projectId: number;
+  technologyId: number;
 }
 
 type ProjectsTechonologiesResult = QueryResult<iProjectsTechonologies>;
@@ -29,5 +29,5 @@ export {
   iProjectsTechonologiesRequest,
   ProjectsTechonologiesResult,
   RequiredTechnologies,
-  RequiredKeysTechnologies
+  RequiredKeysTechnologies,
 };
