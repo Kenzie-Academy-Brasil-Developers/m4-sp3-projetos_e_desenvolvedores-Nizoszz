@@ -13,9 +13,9 @@ const verify = async (
   next: NextFunction
 ): Promise<Response | void> => {
   const body: iProjectsTechonologiesRequest = req.body;
-  const bodyKeys: string[] = Object.keys(body);
-  const bodyValues: string[] = Object.values(body);
-  const requiredKeys: RequiredKeysTechnologies = "name";
+  let bodyKeys: string[] = Object.keys(body);
+  let bodyValues: string[] = Object.values(body);
+  const requiredKeys: RequiredKeysTechnologies[] = ["name"];
   const typesTechnologies: RequiredTechnologies[] = [
     "JavaScript",
     "Python",
@@ -28,27 +28,12 @@ const verify = async (
     "MongoDB",
   ];
 
-  const queryTechnologyTemplate = `
-  SELECT
-      *
-  FROM
-      "technologies"
-  WHERE
-      name = (%L)
-`;
-  const queryTechnologyFormat: string = format(
-    queryTechnologyTemplate,
-    bodyValues
-  );
-
-  const queryTechnologyResult = await client.query(queryTechnologyFormat);
-
-  const verifyKeys = bodyKeys.every((key: string) =>
-    requiredKeys.includes(key)
+  const verifyKeys = bodyKeys.some((key: string) =>
+    requiredKeys.join().includes(key)
   );
 
   if (!verifyKeys) {
-    const joinedKeys: string = requiredKeys;
+    const joinedKeys: string[] = requiredKeys;
     return resp
       .status(400)
       .json({ message: `Required keys are: ${joinedKeys}.` });
@@ -57,6 +42,24 @@ const verify = async (
   if (typeof req.body.name !== "string") {
     return resp.status(400).json({ message: "The name need to be a string" });
   }
+
+  const { name } = req.body;
+
+  bodyValues = name;
+  const queryTechnologyTemplate = `
+    SELECT
+        *
+    FROM
+        "technologies"
+    WHERE
+        name = (%L)
+  `;
+  const queryTechnologyFormat: string = format(
+    queryTechnologyTemplate,
+    bodyValues
+  );
+
+  const queryTechnologyResult = await client.query(queryTechnologyFormat);
 
   if (queryTechnologyResult.rowCount === 0) {
     return resp.status(400).json({

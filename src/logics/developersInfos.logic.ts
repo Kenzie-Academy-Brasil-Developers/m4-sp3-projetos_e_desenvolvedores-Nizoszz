@@ -5,6 +5,7 @@ import { client } from "../database";
 import {
   DeveloperInfoResult,
   DeveloperInfosCreate,
+  iDeveloperInfosUpdate,
 } from "../interfaces/developers.interfaces";
 
 const create = async (req: Request, resp: Response): Promise<Response> => {
@@ -19,7 +20,7 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
     FROM 
       developers d
     LEFT JOIN
-      developer_infos di ON d."developerInfoID" = di.id
+      developer_infos di ON d."developerInfoId" = di.id
     WHERE
       d.id = $1
   `;
@@ -32,7 +33,7 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
 
     const developer = queryUserResult.rows[0];
 
-    if (developer.developerInfoID !== null) {
+    if (developer.developerInfoId !== null) {
       return resp.status(409).json({ message: "Infos already exists." });
     }
 
@@ -51,6 +52,7 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
     `;
 
     const queryAddFormat: string = format(queryTemplate, tbCol, tbValues);
+
     const queryAddResult: DeveloperInfoResult = await client.query(
       queryAddFormat
     );
@@ -61,7 +63,7 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
       UPDATE
         "developers"
       SET
-        "developerInfoID" = $1
+        "developerInfoId" = $1
       WHERE
         id = $2
       RETURNING *;
@@ -93,7 +95,7 @@ const update = async (req: Request, resp: Response): Promise<Response> => {
       FROM 
         developers d
       LEFT JOIN
-        developer_infos di ON d."developerInfoID" = di.id
+        developer_infos di ON d."developerInfoId" = di.id
       WHERE
         d.id = $1
     `;
@@ -107,7 +109,17 @@ const update = async (req: Request, resp: Response): Promise<Response> => {
 
     const developer = queryUserResult.rows[0];
 
-    const body: string[] = req.body;
+    const { developerSince, preferredOS } = req.body;
+    let body: iDeveloperInfosUpdate = { developerSince, preferredOS };
+
+    if (body.developerSince === undefined) {
+      body = { preferredOS };
+    }
+
+    if (body.preferredOS === undefined) {
+      body = { developerSince };
+    }
+
     const tbCol: string[] = Object.keys(body);
     const tbValues: (string | Date)[] = Object.values(body);
 
@@ -123,11 +135,16 @@ const update = async (req: Request, resp: Response): Promise<Response> => {
     const queryFormat: string = format(queryTemplate, tbCol, tbValues);
     const queryConfig: QueryConfig = {
       text: queryFormat,
-      values: [developer.developerInfoID],
+      values: [developer.developerInfoId],
     };
 
     const queryResult: DeveloperInfoResult = await client.query(queryConfig);
     const developerUpdate = queryResult.rows[0];
+    if (developerUpdate === undefined) {
+      return resp
+        .status(404)
+        .json({ message: "Infos not registered in developer." });
+    }
 
     return resp.status(200).json(developerUpdate);
   } catch (error: any) {
