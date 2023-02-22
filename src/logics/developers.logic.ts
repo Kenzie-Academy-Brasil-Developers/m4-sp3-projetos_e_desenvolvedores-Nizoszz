@@ -5,6 +5,7 @@ import { client } from "../database";
 import {
   DeveloperCreate,
   DeveloperResult,
+  iDeveloperUpdate,
 } from "../interfaces/developers.interfaces";
 
 const create = async (req: Request, resp: Response): Promise<Response> => {
@@ -46,7 +47,7 @@ const read = async (req: Request, resp: Response): Promise<Response> => {
     FROM 
       developers d
     LEFT JOIN
-      developer_infos di ON d."developerInfoID" = di.id
+      developer_infos di ON d."developerInfoId" = di.id
     ORDER BY
       id ASC;
   `;
@@ -69,7 +70,7 @@ const readId = async (req: Request, resp: Response): Promise<Response> => {
     FROM 
       developers d
     LEFT JOIN
-      developer_infos di ON d."developerInfoID" = di.id
+      developer_infos di ON d."developerInfoId" = di.id
     WHERE 
       d."id" = (%L)
     ORDER BY
@@ -86,15 +87,26 @@ const readId = async (req: Request, resp: Response): Promise<Response> => {
 
 const update = async (req: Request, resp: Response): Promise<Response> => {
   try {
-    const body: string[] = req.body;
-    const tbCol: string[] = Object.keys(body);
-    const tbValues: string[] = Object.values(body);
+    const { name, email } = req.body;
+    let body: iDeveloperUpdate = { name, email };
+
     const params = req.params.id;
 
+    if (body.name === undefined) {
+      body = { email };
+    }
+
+    if (body.email === undefined) {
+      body = { name };
+    }
+
+    const tbCol: string[] = Object.keys(body);
+    const tbValues: string[] = Object.values(body);
     const queryTemplate = `
       UPDATE 
         "developers"
-      SET(%I) = ROW(%L)
+      SET
+        (%I) = ROW(%L)
       WHERE 
         id = $1
       RETURNING *;    

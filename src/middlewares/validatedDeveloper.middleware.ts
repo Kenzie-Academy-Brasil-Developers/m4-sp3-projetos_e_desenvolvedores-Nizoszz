@@ -1,12 +1,16 @@
 import { NextFunction, Request, Response } from "express";
-import { RequiredKeysDeveloper } from "../interfaces/developers.interfaces";
+import {
+  iDeveloperRequest,
+  RequiredKeysDeveloper,
+} from "../interfaces/developers.interfaces";
 
 const verify = async (
   req: Request,
   resp: Response,
   next: NextFunction
 ): Promise<Response | void> => {
-  const bodyKeys: string[] = Object.keys(req.body);
+  const body: iDeveloperRequest = req.body;
+  const bodyKeys: string[] = Object.keys(body);
   const requiredKeys: RequiredKeysDeveloper[] = ["name", "email"];
 
   let verifyKeys: boolean = requiredKeys.every((key: string) =>

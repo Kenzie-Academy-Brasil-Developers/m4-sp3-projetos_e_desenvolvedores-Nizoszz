@@ -9,9 +9,10 @@ import {
 
 const create = async (req: Request, resp: Response): Promise<Response> => {
   try {
+    const { name } = req.body;
     const projectId: number = Number(req.params.id);
-    const body: iProjectsTechonologiesRequest = req.body;
-    const tbValues: string[] = Object.values(body);
+    const tbValues: string[] = name;
+
     const queryTechnologyTemplate = `
         SELECT
             *
@@ -24,56 +25,47 @@ const create = async (req: Request, resp: Response): Promise<Response> => {
       queryTechnologyTemplate,
       tbValues
     );
-
     const queryTechnologyResult = await client.query(queryTechnologyFormat);
     const addIn: Date = new Date();
-
     const queryTemplate: string = `
         INSERT INTO
-            "projects_technologies" ("addedIn", "projectID", "technologyID")
+            "projects_technologies" ("addedIn", "projectId", "technologyId")
         VALUES
             (%L)
         RETURNING *;
       `;
-
     const queryFormat: string = format(queryTemplate, [
       addIn,
       projectId,
       queryTechnologyResult.rows[0].id,
     ]);
-
     const queryResult: ProjectsTechonologiesResult = await client.query(
       queryFormat
     );
-
     const queryReturnTemplate = `
-        SELECT 
-            pt."technologyID",
+        SELECT
+            pt."technologyId",
             t."name" "technologyName",
-            pt."projectID",
+            pt."projectId",
             p."name" "projectName",
             p."description" "projectDescription",
             p."estimatedTime" "projectEstimatedTime",
             p."repository" "projectRepository",
             p."startDate" "projectStartDate",
             p."endDate" "projectEndDate",
-            p."developerID" "projectDeveloperID"
-        FROM 
+            p."developerId" "projectDeveloperId"
+        FROM
             projects p
-        JOIN 
-            projects_technologies pt ON p."id" = pt."projectID"
-        JOIN 
-            technologies t ON pt."technologyID" = t."id";
+        JOIN
+            projects_technologies pt ON p."id" = pt."projectId"
+        JOIN
+            technologies t ON pt."technologyId" = t."id";
         `;
-
     const queryReturnFormat: string = format(queryReturnTemplate);
-
     const queryReturnResult: QueryArrayResult = await client.query(
       queryReturnFormat
     );
-
     const project = queryReturnResult.rows[0];
-
     return resp.status(201).json(project);
   } catch (error: any) {
     return resp.status(500).json({ message: "Internal server error." });
@@ -104,9 +96,9 @@ const del = async (request: Request, response: Response): Promise<Response> => {
     DELETE FROM 
         projects_technologies
     WHERE 
-        "projectID" = $1
+        "projectId" = $1
     AND 
-        "technologyID" = $2;
+        "technologyId" = $2;
     `;
 
   const queryConfig: QueryConfig = {
